@@ -25,10 +25,10 @@
 ## Feature Readiness
 
 - [x] All functional requirements have clear acceptance criteria
-- [x] User scenarios cover primary flows
+- [x] User scenarios cover primary flows (Pairing & Remote Volume, Queue, Search & Playlist Editing, Karaoke Lyrics)
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] No implementation details leak into specification
 
 ## Notes
 
-- All checklist items validated and passing. Ready for `/speckit-plan`.
+- Updated on 2026-10-24 to incorporate Search, Playlist Editing (add/remove songs), explicit Remote Volume Controls, and Karaoke Time-Synced Lyrics.

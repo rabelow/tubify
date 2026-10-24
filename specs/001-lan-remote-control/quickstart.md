@@ -10,9 +10,9 @@
    Invoke-RestMethod http://192.168.0.144:9863/metadata
    # Expected: apiVersions : {v1}
    ```
-3. Ensure Windows Firewall allows inbound LAN connections from your phone on port `9863` (and `5173` if testing the web UI before building the APK). Run in an **Administrator PowerShell** once:
+3. Ensure Windows Firewall allows inbound LAN connections from your phone on port `9863` and `5173`. Run in an **Administrator PowerShell** once:
    ```powershell
-   New-NetFirewallRule -DisplayName "Tubify YTMDesktop Companion (9863)" -Direction Inbound -Protocol TCP -LocalPort 9863,5173 -Profile Private -Action Allow
+   New-NetFirewallRule -DisplayName "Tubify LAN Remote (9863, 5173)" -Direction Inbound -Protocol TCP -LocalPort 9863,5173 -Profile Private -Action Allow
    ```
 
 ## 2. Run & Validate in Mobile Browser (LAN Mode)
@@ -24,14 +24,20 @@ npm run dev -- --host
 ```
 
 1. Open `http://192.168.0.144:5173` on your Android phone (connected to the same Wi-Fi).
-2. Confirm the host IP defaults to `192.168.0.144` and port `9863`, then tap **Connect & Pair**.
-3. Verify the pairing code appears on the phone and a popup appears in YTMDesktop on Windows.
-4. Click **Allow** in YTMDesktop on Windows.
-5. Verify the phone transitions to **Now Playing** and displays the active track, artwork, and live progress.
-6. Tap **Play/Pause**, **Next**, **Seek**, and adjust **Volume**; verify Windows audio responds within <500ms.
-7. Switch to the **Queue** tab and tap any track to jump directly to it.
-8. Switch to the **Playlists** tab and tap a playlist to start playing it.
-9. Tap **Play Link**, paste a YouTube Music URL, and confirm playback starts on Windows.
+2. **US1 — Pair, Playback & Remote Volume**:
+   - Confirm the host IP defaults to `192.168.0.144` and port `9863`, then tap **Connect & Pair**.
+   - Click **Allow** in YTMDesktop on Windows when the pairing code appears.
+   - Verify the **Now Playing** screen shows live track info, artwork, and progress.
+   - Drag the **Remote Volume slider** (`0–100%`), tap `-5%` / `+5%`, and toggle **Mute/Unmute**; verify Windows audio volume responds immediately.
+   - Tap **Play/Pause**, **Next**, **Seek**, **Shuffle**, **Repeat**, and **Like/Dislike**.
+3. **US2 — Queue**:
+   - Switch to the **Queue** tab and tap any upcoming track to jump directly to it on Windows.
+4. **US3 — Search & Playlist Editing**:
+   - Switch to the **Search** tab, type a song or artist, and tap **Play** to start it on Windows or **+ Playlist** to add it to a playlist.
+   - Switch to the **Playlists** tab, create a playlist, open it, verify added songs appear, remove a song, and tap **Play Playlist** to play it on Windows.
+5. **US4 — Karaoke Synced Lyrics**:
+   - Switch to the **Lyrics** tab while a song is playing.
+   - Verify time-synced lyrics highlight and auto-scroll in sync with the music, and tap any lyric line to seek the Windows player to that line.
 
 ## 3. Build Android APK (Capacitor)
 
@@ -41,4 +47,4 @@ npx cap sync android
 npx cap open android
 ```
 
-Build and install the debug APK onto your Android phone via Android Studio or `cd android && .\gradlew assembleDebug`.
+Build and install the APK onto your Android phone via Android Studio or `cd android && .\gradlew assembleDebug`. Keep `npm run dev -- --host` (or `npm run preview -- --host`) running on the Windows PC when using Search and Editable Playlists from the APK.

@@ -1,4 +1,4 @@
-# Phase 1 Data Model: Tubify Client & Companion Entities
+# Phase 1 Data Model: Tubify Client, Search, Playlists & Karaoke Lyrics
 
 ## 1. Client Persistence Model (`localStorage`)
 
@@ -9,12 +9,13 @@ Stored under key `tubify.connection.v1`.
 |---|---|---|---|
 | `host` | `string` | Non-empty IPv4 or hostname (defaults to `window.location.hostname` if not `localhost`, else `192.168.0.144`) | Target Windows PC LAN IP or Tailscale IP |
 | `port` | `number` | Integer `1..65535`, default `9863` | YTMDesktop Companion Server port |
+| `apiPort` | `number` | Integer `1..65535`, default `5173` | Port for Tubify local search/playlists API on the same Windows host |
 | `appId` | `string` | Lowercase alphanumeric `2..32` chars, default `"tubify"` | Identifier bound to the YTMDesktop token |
 | `token` | `string \| null` | Non-empty token string once paired | Token returned by `POST /api/v1/auth/request` |
 
-## 2. Upstream YTMDesktop v2 State Entities (`src/types/companion.ts`)
+---
 
-### `CompanionState` (Payload of `GET /api/v1/state` and Socket.IO `state-update`)
+## 2. Upstream YTMDesktop v2 State Entities (`src/types/companion.ts`)
 
 ```ts
 export type TrackState = -1 | 0 | 1 | 2; // -1 Unknown, 0 Paused, 1 Playing, 2 Buffering
@@ -65,7 +66,7 @@ export interface VideoMetadata {
 export interface CompanionState {
   player: {
     trackState: TrackState;
-    videoProgress: number; // Seconds (float/number)
+    videoProgress: number; // Seconds
     volume: number;        // 0..100
     adPlaying: boolean;
     queue: PlayerQueue | null;
@@ -80,18 +81,43 @@ export interface PlaylistSummary {
 }
 ```
 
-## 3. Connection Lifecycle States
+---
 
-```mermaid
-stateDiagram-v2
-  [*] --> Unpaired: No saved token
-  [*] --> Connecting: Saved host + token found
-  Unpaired --> RequestingCode: User submits host IP
-  RequestingCode --> AwaitingApproval: Code displayed (30s timeout)
-  AwaitingApproval --> Connected: User clicks Allow on Windows PC
-  AwaitingApproval --> Unpaired: Denied / Timed out
-  Connecting --> Connected: Socket.IO connected & initial state loaded
-  Connected --> Reconnecting: Socket disconnect / network drop
-  Reconnecting --> Connected: Socket reconnects
-  Connected --> Unpaired: 401 Unauthorized or user clicks Disconnect
+## 3. Search & Editable Playlist Entities (`src/types/companion.ts` & `data/playlists.json`)
+
+```ts
+export interface SearchTrack {
+  videoId: string;
+  title: string;
+  artist: string;
+  album?: string;
+  duration?: string;
+  thumbnailUrl?: string;
+}
+
+export interface EditablePlaylist {
+  id: string;              // UUID or slug
+  title: string;           // User-defined name (e.g. "Late Night Coding")
+  updatedAt: string;       // ISO-8601 UTC timestamp
+  tracks: SearchTrack[];   // Ordered list of tracks in the playlist
+}
+```
+
+---
+
+## 4. Karaoke Lyrics Entities (`src/lib/lyrics.ts`)
+
+```ts
+export interface LyricLine {
+  timeSeconds: number;     // Parsed from [mm:ss.xx]
+  text: string;            // Lyric text for that timestamp
+}
+
+export interface TrackLyrics {
+  videoId: string;
+  synced: boolean;         // True when syncedLyrics [mm:ss.xx] lines are available
+  instrumental: boolean;
+  lines: LyricLine[];      // Sorted ascending by timeSeconds
+  plainText: string | null;
+}
 ```
