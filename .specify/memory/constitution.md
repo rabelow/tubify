@@ -1,50 +1,77 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+- Version change: [CONSTITUTION_VERSION] -> 1.0.0
+- Modified principles:
+  - [PRINCIPLE_1_NAME] -> I. Direct-to-Companion Simplicity (YAGNI)
+  - [PRINCIPLE_2_NAME] -> II. Single-App Architecture
+  - [PRINCIPLE_3_NAME] -> III. Authoritative Real-Time State
+  - [PRINCIPLE_4_NAME] -> IV. Native Pairing & Local-Only Credentials
+  - [PRINCIPLE_5_NAME] -> V. Incremental Vertical Slices & Runnable Checks
+- Added sections:
+  - Architectural Constraints
+  - Development Workflow & Quality Gates
+- Removed sections: None
+- Templates requiring updates:
+  - ✅ .specify/templates/plan-template.md (Constitution Check aligns with 5 principles)
+  - ✅ .specify/templates/spec-template.md (User stories P1-P3 align with vertical slice principle)
+  - ✅ .specify/templates/tasks-template.md (Task phases align with story-driven organization)
+- Follow-up TODOs: None
+-->
+# Tubify Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Direct-to-Companion Simplicity (YAGNI)
+Tubify MUST communicate directly over the local network (LAN) with the built-in YTMDesktop v2
+Companion Server (`http://<PC_LAN_IP>:9863/api/v1` and Socket.IO `/api/v1/realtime`). Cloud relays,
+custom intermediary Windows background agents, databases, and multi-player adapter abstractions
+MUST NOT be added unless a concrete requirement cannot be met by the native Companion API.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Single-App Architecture
+The codebase MUST live in a single flat application at the repository root (`src/` for the
+TypeScript/React mobile web UI and `android/` for the Capacitor Android shell). Workspace
+monorepos (`apps/*`, `packages/*`) and speculative shared libraries are prohibited.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Authoritative Real-Time State
+YTMDesktop's Socket.IO `state-update` stream and `GET /api/v1/state` endpoint MUST serve as the
+single source of truth for playback, volume, queue, and track metadata. The client MAY locally
+interpolate playback progress (`videoProgress`) at 60fps/1s intervals while `trackState === 1`,
+but MUST reconcile immediately upon receiving upstream state updates.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Native Pairing & Local-Only Credentials
+Client authentication MUST use YTMDesktop v2's native pairing endpoints (`POST /auth/requestcode`
+followed by `POST /auth/request` with desktop user approval). Resulting auth tokens and LAN host
+settings MUST be persisted only in client local storage and MUST NEVER be hardcoded or committed.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Incremental Vertical Slices & Runnable Checks
+Work MUST be decomposed into independently testable user stories ordered by user value. Non-trivial
+logic (Companion REST/Socket client, state normalization, YouTube Music link/ID parsing) MUST
+include focused unit/integration checks (`vitest`) without heavyweight test scaffolding.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Architectural Constraints
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- **Target Upstream**: YTMDesktop v2 Companion Server API v1 (`0.0.0.0:9863`), verified live on the
+  host Windows machine.
+- **Network Scope**: Local Area Network (Wi-Fi/Ethernet) or existing user VPN (e.g., Tailscale)
+  directly targeting the Windows PC IP on port `9863`. No public Internet exposure.
+- **Client Runtime**: Mobile-first React + TypeScript + Vite web app packaged for Android via
+  Capacitor with `usesCleartextTraffic="true"` enabled so direct LAN `http://` and `ws://` calls
+  to port `9863` succeed on Android.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Development Workflow & Quality Gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Follow the GitHub Spec Kit lifecycle (`constitution` -> `specify` -> `plan` -> `tasks` ->
+  `implement`).
+- Each user story phase in `tasks.md` MUST be independently verifiable against the live YTMDesktop
+  Companion Server or a deterministic mock before advancing to the next story.
+- Keep dependencies minimal: native `fetch` for REST calls, `socket.io-client` (required by
+  YTMDesktop v2 `/api/v1/realtime`), React for UI, and Capacitor for Android packaging.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This Constitution supersedes speculative design documents, including the initial cloud-relay
+proposal in `ytmusic-connect-technical-design.md`. Any proposal to introduce a backend relay,
+custom Windows service, or multi-package monorepo requires an explicit Constitution amendment with
+documented proof that direct LAN communication with YTMDesktop v2 is insufficient.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-24 | **Last Amended**: 2026-10-24
