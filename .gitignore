@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Agent metadata and preview workspaces
+.agents/
+
+# Local custom playlist data (user-specific runtime state)
+data/playlists.json
+
+# Environment and local overrides
+*.local
+.env
+.env.*
+!.env.example
+
+# Vitest / coverage
+coverage/
+
+# Capacitor / Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/local.properties
+
+# IDE and OS files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

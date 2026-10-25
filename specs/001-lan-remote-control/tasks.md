@@ -20,9 +20,9 @@
 
 **Purpose**: Initialize the single-root Vite + React + TypeScript + Capacitor project
 
-- [ ] T001 Create `package.json`, `tsconfig.json`, and `vite.config.ts` with React 19, TypeScript, Vite, Vitest, `socket.io-client`, and Capacitor scripts at `package.json`
-- [ ] T002 [P] Create mobile-first HTML shell and dark Spotify/YouTube Music stylesheet (including volume controls and karaoke lyric highlight classes) in `index.html` and `src/styles.css`
-- [ ] T003 [P] Configure `.gitignore` to exclude `node_modules/`, `dist/`, `.agents/`, `data/playlists.json`, and local build artifacts in `.gitignore`
+- [x] T001 Create `package.json`, `tsconfig.json`, and `vite.config.ts` with React 19, TypeScript, Vite, Vitest, `socket.io-client`, and Capacitor scripts at `package.json`
+- [x] T002 [P] Create mobile-first HTML shell and dark Spotify/YouTube Music stylesheet (including volume controls and karaoke lyric highlight classes) in `index.html` and `src/styles.css`
+- [x] T003 [P] Configure `.gitignore` to exclude `node_modules/`, `dist/`, `.agents/`, `data/playlists.json`, and local build artifacts in `.gitignore`
 
 ---
 
@@ -32,11 +32,11 @@
 
 **⚠️ CRITICAL**: Complete Phase 2 before starting User Story phases
 
-- [ ] T004 [P] Define TypeScript interfaces (`CompanionState`, `QueueItem`, `VideoMetadata`, `PlaylistSummary`, `SearchTrack`, `EditablePlaylist`, `LyricLine`, `TrackLyrics`, `ConnectionProfile`) in `src/types/companion.ts`
-- [ ] T005 [P] Implement `ConnectionProfile` load/save/clear helpers backed by `localStorage` (`tubify.connection.v1`) with smart LAN host default (`192.168.0.144`) in `src/lib/storage.ts`
-- [ ] T006 [P] Implement `parseYouTubeInput(input: string)` extracting `videoId` and `playlistId` from YouTube/YTM links and IDs in `src/lib/url-parser.ts` with unit tests in `tests/url-parser.test.ts`
-- [ ] T007 Implement `CompanionClient` (`checkMetadata`, `requestCode`, `requestToken`, `getState`, `getPlaylists`, `sendCommand` including `setVolume`/`volumeUp`/`volumeDown`/`mute`/`unmute`,Socket.IO `connectRealtime`, plus local API calls `searchSongs` and playlist CRUD) in `src/lib/companion-client.ts`
-- [ ] T008 [P] Add unit tests for `CompanionClient` REST endpoints, `Authorization` header formatting, and transport/volume command payloads in `tests/companion-client.test.ts`
+- [x] T004 [P] Define TypeScript interfaces (`CompanionState`, `QueueItem`, `VideoMetadata`, `PlaylistSummary`, `SearchTrack`, `EditablePlaylist`, `LyricLine`, `TrackLyrics`, `ConnectionProfile`) in `src/types/companion.ts`
+- [x] T005 [P] Implement `ConnectionProfile` load/save/clear helpers backed by `localStorage` (`tubify.connection.v1`) with smart LAN host default (`192.168.0.144`) in `src/lib/storage.ts`
+- [x] T006 [P] Implement `parseYouTubeInput(input: string)` extracting `videoId` and `playlistId` from YouTube/YTM links and IDs in `src/lib/url-parser.ts` with unit tests in `tests/url-parser.test.ts`
+- [x] T007 Implement `CompanionClient` (`checkMetadata`, `requestCode`, `requestToken`, `getState`, `getPlaylists`, `sendCommand` including `setVolume`/`volumeUp`/`volumeDown`/`mute`/`unmute`,Socket.IO `connectRealtime`, plus local API calls `searchSongs` and playlist CRUD) in `src/lib/companion-client.ts`
+- [x] T008 [P] Add unit tests for `CompanionClient` REST endpoints, `Authorization` header formatting, and transport/volume command payloads in `tests/companion-client.test.ts`
 
 **Checkpoint**: Foundation ready — User Story phases can now execute in parallel
 
@@ -50,10 +50,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `useCompanion` React hook managing connection lifecycle (`unpaired`, `requesting_code`, `awaiting_approval`, `connected`, `reconnecting`), Socket.IO subscription, 200ms progress interpolation while `trackState === 1`, remote volume state/mute tracking, and custom playlist queue auto-advance in `src/hooks/useCompanion.ts`
-- [ ] T010 [P] [US1] Build `PairingView` component with host/port inputs, metadata reachability check, pairing code display, 30s approval waiting state, and error/retry banner in `src/components/PairingView.tsx`
-- [ ] T011 [P] [US1] Build `NowPlayingView` component with album artwork, title/artist/album, ad-playing badge, interpolated seek slider, transport buttons, "+ Add to Playlist" quick action, and dedicated **Remote Volume bar** (`0–100%` range slider, `-5%`/`+5%` step buttons, Mute/Unmute toggle) in `src/components/NowPlayingView.tsx`
-- [ ] T012 [US1] Wire `App.tsx` and `src/main.tsx` with connection status header, bottom navigation bar (`Now Playing`, `Queue`, `Search`, `Playlists`, `Lyrics`), and `PairingView` / `NowPlayingView` rendering in `src/App.tsx` and `src/main.tsx`
+- [x] T009 [US1] Implement `useCompanion` React hook managing connection lifecycle (`unpaired`, `requesting_code`, `awaiting_approval`, `connected`, `reconnecting`), Socket.IO subscription, 200ms progress interpolation while `trackState === 1`, remote volume state/mute tracking, and custom playlist queue auto-advance in `src/hooks/useCompanion.ts`
+- [x] T010 [P] [US1] Build `PairingView` component with host/port inputs, metadata reachability check, pairing code display, 30s approval waiting state, and error/retry banner in `src/components/PairingView.tsx`
+- [x] T011 [P] [US1] Build `NowPlayingView` component with album artwork, title/artist/album, ad-playing badge, interpolated seek slider, transport buttons, "+ Add to Playlist" quick action, and dedicated **Remote Volume bar** (`0–100%` range slider, `-5%`/`+5%` step buttons, Mute/Unmute toggle) in `src/components/NowPlayingView.tsx`
+- [x] T012 [US1] Wire `App.tsx` and `src/main.tsx` with connection status header, bottom navigation bar (`Now Playing`, `Queue`, `Search`, `Playlists`, `Lyrics`), and `PairingView` / `NowPlayingView` rendering in `src/App.tsx` and `src/main.tsx`
 
 **Checkpoint**: User Story 1 (MVP with Remote Volume Control) is complete and playable over LAN
 
@@ -67,8 +67,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [P] [US2] Build `QueueView` component rendering `queue.items` and `queue.automixItems`, highlighting `selectedItemIndex`, "+ Add to Playlist" button per item, and dispatching `playQueueIndex` on tap in `src/components/QueueView.tsx`
-- [ ] T014 [US2] Connect `QueueView` tab in `src/App.tsx` to `useCompanion` queue state and `playQueueIndex` action in `src/App.tsx`
+- [x] T013 [P] [US2] Build `QueueView` component rendering `queue.items` and `queue.automixItems`, highlighting `selectedItemIndex`, "+ Add to Playlist" button per item, and dispatching `playQueueIndex` on tap in `src/components/QueueView.tsx`
+- [x] T014 [US2] Connect `QueueView` tab in `src/App.tsx` to `useCompanion` queue state and `playQueueIndex` action in `src/App.tsx`
 
 **Checkpoint**: User Stories 1 and 2 work independently
 
@@ -82,16 +82,16 @@
 
 ### Tests for User Story 3
 
-- [ ] T015 [P] [US3] Write unit tests for `PlaylistsStore` (create playlist, rename, delete, add track deduplication, remove track) in `tests/playlists-store.test.ts`
+- [x] T015 [P] [US3] Write unit tests for `PlaylistsStore` (create playlist, rename, delete, add track deduplication, remove track) in `tests/playlists-store.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T016 [P] [US3] Implement `PlaylistsStore` reading and writing `data/playlists.json` (create, rename, delete playlist, add track, remove track) in `src/server/playlists-store.ts`
-- [ ] T017 [P] [US3] Implement `searchYouTubeMusic(query: string)` querying `https://music.youtube.com/youtubei/v1/search` (`WEB_REMIX` songs filter) and parsing `SearchTrack[]` results in `src/server/ytmusic-search.ts`
-- [ ] T018 [US3] Implement Vite/Node middleware `localApiPlugin()` serving `GET /api/search` and `/api/playlists` CRUD routes with CORS headers, and register it in `src/server/local-api.ts` and `vite.config.ts`
-- [ ] T019 [P] [US3] Build `SearchView` component with debounced search bar, direct URL/ID paste support, results list, one-tap "Play on PC" (`changeVideo`), and "+ Add to Playlist" picker in `src/components/SearchView.tsx`
-- [ ] T020 [P] [US3] Build `PlaylistsView` component showing editable Tubify playlists (create, rename, delete, expand tracks, remove track, play track/playlist) and native YTMDesktop playlists (`GET /api/v1/playlists`) in `src/components/PlaylistsView.tsx`
-- [ ] T021 [US3] Connect `SearchView`, `PlaylistsView`, and the global "Add to Playlist" action in `src/App.tsx` and `src/hooks/useCompanion.ts`
+- [x] T016 [P] [US3] Implement `PlaylistsStore` reading and writing `data/playlists.json` (create, rename, delete playlist, add track, remove track) in `src/server/playlists-store.ts`
+- [x] T017 [P] [US3] Implement `searchYouTubeMusic(query: string)` querying `https://music.youtube.com/youtubei/v1/search` (`WEB_REMIX` songs filter) and parsing `SearchTrack[]` results in `src/server/ytmusic-search.ts`
+- [x] T018 [US3] Implement Vite/Node middleware `localApiPlugin()` serving `GET /api/search` and `/api/playlists` CRUD routes with CORS headers, and register it in `src/server/local-api.ts` and `vite.config.ts`
+- [x] T019 [P] [US3] Build `SearchView` component with debounced search bar, direct URL/ID paste support, results list, one-tap "Play on PC" (`changeVideo`), and "+ Add to Playlist" picker in `src/components/SearchView.tsx`
+- [x] T020 [P] [US3] Build `PlaylistsView` component showing editable Tubify playlists (create, rename, delete, expand tracks, remove track, play track/playlist) and native YTMDesktop playlists (`GET /api/v1/playlists`) in `src/components/PlaylistsView.tsx`
+- [x] T021 [US3] Connect `SearchView`, `PlaylistsView`, and the global "Add to Playlist" action in `src/App.tsx` and `src/hooks/useCompanion.ts`
 
 **Checkpoint**: User Stories 1, 2, and 3 work independently
 
@@ -105,13 +105,13 @@
 
 ### Tests for User Story 4
 
-- [ ] T022 [P] [US4] Write unit tests for `parseLrc(lrcText)` and `getActiveLyricIndex(lines, currentSeconds)` in `tests/lyrics.test.ts`
+- [x] T022 [P] [US4] Write unit tests for `parseLrc(lrcText)` and `getActiveLyricIndex(lines, currentSeconds)` in `tests/lyrics.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T023 [P] [US4] Implement `fetchTrackLyrics(video)` (`lrclib.net/api/get` with `/api/search` fallback), `parseLrc(lrcText)`, and `getActiveLyricIndex(lines, currentSeconds)` in `src/lib/lyrics.ts`
-- [ ] T024 [P] [US4] Build `LyricsView` component with karaoke active-line glow, smooth auto-scroll to active line (`scrollIntoView({ behavior: 'smooth', block: 'center' })`), tap-line-to-seek (`seekTo`), and plain-text / instrumental fallbacks in `src/components/LyricsView.tsx`
-- [ ] T025 [US4] Connect `LyricsView` tab in `src/App.tsx` to `useCompanion`'s active `video`, interpolated `progress`, and `seekTo` command in `src/App.tsx`
+- [x] T023 [P] [US4] Implement `fetchTrackLyrics(video)` (`lrclib.net/api/get` with `/api/search` fallback), `parseLrc(lrcText)`, and `getActiveLyricIndex(lines, currentSeconds)` in `src/lib/lyrics.ts`
+- [x] T024 [P] [US4] Build `LyricsView` component with karaoke active-line glow, smooth auto-scroll to active line (`scrollIntoView({ behavior: 'smooth', block: 'center' })`), tap-line-to-seek (`seekTo`), and plain-text / instrumental fallbacks in `src/components/LyricsView.tsx`
+- [x] T025 [US4] Connect `LyricsView` tab in `src/App.tsx` to `useCompanion`'s active `video`, interpolated `progress`, and `seekTo` command in `src/App.tsx`
 
 **Checkpoint**: All 4 user stories are complete and independently testable
 
@@ -121,9 +121,9 @@
 
 **Purpose**: Package the web app as an Android APK via Capacitor with LAN cleartext HTTP/WS enabled and document setup
 
-- [ ] T026 [P] Create `capacitor.config.ts` with `appId: "com.rabelow.tubify"`, `appName: "Tubify"`, `webDir: "dist"`, and `server: { cleartext: true }` in `capacitor.config.ts`
-- [ ] T027 Initialize Capacitor Android platform (`npx cap add android`) and enable `android:usesCleartextTraffic="true"` in `android/app/src/main/AndroidManifest.xml`
-- [ ] T028 [P] Write concise `README.md` covering LAN setup, Windows Firewall command, Search/Playlists/Karaoke usage, and Android APK build instructions in `README.md`
+- [x] T026 [P] Create `capacitor.config.ts` with `appId: "com.rabelow.tubify"`, `appName: "Tubify"`, `webDir: "dist"`, and `server: { cleartext: true }` in `capacitor.config.ts`
+- [x] T027 Initialize Capacitor Android platform (`npx cap add android`) and enable `android:usesCleartextTraffic="true"` in `android/app/src/main/AndroidManifest.xml`
+- [x] T028 [P] Write concise `README.md` covering LAN setup, Windows Firewall command, Search/Playlists/Karaoke usage, and Android APK build instructions in `README.md`
 
 ---
 
