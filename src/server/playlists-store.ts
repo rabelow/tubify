@@ -166,23 +166,46 @@ export class PlaylistsStore {
   }
 
   /**
-   * Creates a new playlist with the specified title (defaults to "Untitled Playlist").
+   * Creates a new playlist with the specified title (defaults to "Untitled Playlist")
+   * and optional initial tracks.
    */
-  public createPlaylist(title?: string): EditablePlaylist {
+  public createPlaylist(title?: string, initialTracks?: SearchTrack[]): EditablePlaylist {
     const cleanTitle = title && title.trim() ? title.trim() : 'Untitled Playlist';
     const now = new Date().toISOString();
+    const dedupedTracks: SearchTrack[] = [];
+    const seenIds = new Set<string>();
+
+    if (Array.isArray(initialTracks)) {
+      for (const t of initialTracks) {
+        if (t && typeof t.videoId === 'string' && t.videoId.trim()) {
+          const vid = t.videoId.trim();
+          if (!seenIds.has(vid)) {
+            seenIds.add(vid);
+            dedupedTracks.push({
+              videoId: vid,
+              title: String(t.title ?? 'Unknown Title').trim(),
+              artist: String(t.artist ?? 'Unknown Artist').trim(),
+              album: t.album ? String(t.album).trim() : undefined,
+              duration: t.duration ? String(t.duration).trim() : undefined,
+              thumbnailUrl: t.thumbnailUrl ? String(t.thumbnailUrl).trim() : undefined,
+            });
+          }
+        }
+      }
+    }
+
     const newPlaylist: EditablePlaylist = {
       id: crypto.randomUUID(),
       title: cleanTitle,
       name: cleanTitle,
       createdAt: now,
       updatedAt: now,
-      tracks: [],
+      tracks: dedupedTracks,
     };
 
     this.playlists.push(newPlaylist);
     this.writeToDisk();
-    return { ...newPlaylist, tracks: [] };
+    return { ...newPlaylist, tracks: [...newPlaylist.tracks] };
   }
 
   /**

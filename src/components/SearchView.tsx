@@ -14,12 +14,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { SearchTrack } from '../types/companion';
 import { parseYouTubeInput, ParsedYouTubeInput } from '../lib/url-parser';
 import { CompanionClient } from '../lib/companion-client';
+import { TrackActionSheet } from './TrackActionSheet';
 
 export interface SearchViewProps {
   client: CompanionClient;
   onPlayTrack: (track: SearchTrack) => void | Promise<void>;
   onPlayDirectVideo?: (videoId: string | null, playlistId?: string | null) => void | Promise<void>;
   onAddToPlaylist: (track: SearchTrack) => void;
+  onPlayNext?: (track: SearchTrack) => void | Promise<void>;
+  onPlayLast?: (track: SearchTrack) => void | Promise<void>;
 }
 
 export const SearchView: React.FC<SearchViewProps> = ({
@@ -27,6 +30,8 @@ export const SearchView: React.FC<SearchViewProps> = ({
   onPlayTrack,
   onPlayDirectVideo,
   onAddToPlaylist,
+  onPlayNext,
+  onPlayLast,
 }) => {
   const [query, setQuery] = useState<string>('');
   const [debouncedQuery, setDebouncedQuery] = useState<string>('');
@@ -34,7 +39,37 @@ export const SearchView: React.FC<SearchViewProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [directInput, setDirectInput] = useState<ParsedYouTubeInput | null>(null);
+  const [actionTrack, setActionTrack] = useState<SearchTrack | null>(null);
+  const [queueToast, setQueueToast] = useState<string | null>(null);
   const searchIdRef = useRef<number>(0);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPressRef = useRef<boolean>(false);
+
+  const showToast = useCallback((msg: string) => {
+    setQueueToast(msg);
+    setTimeout(() => {
+      setQueueToast((prev) => (prev === msg ? null : prev));
+    }, 2200);
+  }, []);
+
+  const clearLongPress = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  }, []);
+
+  const startLongPress = useCallback(
+    (track: SearchTrack) => {
+      didLongPressRef.current = false;
+      clearLongPress();
+      longPressTimerRef.current = setTimeout(() => {
+        didLongPressRef.current = true;
+        setActionTrack(track);
+      }, 420);
+    },
+    [clearLongPress]
+  );
 
   // Debounce query input by 350ms
   useEffect(() => {
@@ -199,15 +234,49 @@ export const SearchView: React.FC<SearchViewProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
             <button
               type="button"
               className="btn-primary"
               onClick={handlePlayDirect}
-              style={{ flex: 1, height: 38 }}
+              style={{ flex: 1, height: 38, minWidth: 140 }}
             >
               ▶ Play Now on PC
             </button>
+            {directInput.videoId && onPlayNext && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  onPlayNext({
+                    videoId: directInput.videoId!,
+                    title: `YouTube Video (${directInput.videoId})`,
+                    artist: 'YouTube',
+                  });
+                  showToast('Added to Play Next');
+                }}
+                style={{ height: 38, padding: '0 12px' }}
+              >
+                ⏭ Play Next
+              </button>
+            )}
+            {directInput.videoId && onPlayLast && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  onPlayLast({
+                    videoId: directInput.videoId!,
+                    title: `YouTube Video (${directInput.videoId})`,
+                    artist: 'YouTube',
+                  });
+                  showToast('Added to End of Queue');
+                }}
+                style={{ height: 38, padding: '0 12px' }}
+              >
+                ⤵ Play Last
+              </button>
+            )}
             {directInput.videoId && (
               <button
                 type="button"
@@ -219,6 +288,23 @@ export const SearchView: React.FC<SearchViewProps> = ({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Queue Feedback Toast */}
+      {queueToast && (
+        <div
+          className="banner-info"
+          role="status"
+          style={{
+            marginBottom: 12,
+            background: 'rgba(245, 158, 11, 0.16)',
+            borderColor: 'rgba(245, 158, 11, 0.45)',
+            color: '#fde68a',
+            fontWeight: 600,
+          }}
+        >
+          ✨ {queueToast}
         </div>
       )}
 
@@ -268,14 +354,46 @@ export const SearchView: React.FC<SearchViewProps> = ({
       {/* Search Results List */}
       {!isLoading && results.length > 0 && (
         <div className="search-results-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 4, textTransform: 'uppercase', fontWeight: 700 }}>
-            Songs ({results.length})
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '0.78rem',
+              color: 'var(--text-muted)',
+              marginBottom: 4,
+              textTransform: 'uppercase',
+              fontWeight: 700,
+            }}
+          >
+            <span>Songs ({results.length})</span>
+            <span style={{ fontWeight: 500, textTransform: 'none', fontSize: '0.75rem' }}>
+              Hold song or tap ••• for Play Next / Last
+            </span>
           </div>
 
           {results.map((track) => (
             <div
               key={track.videoId}
               className="track-row"
+              data-testid={`search-row-${track.videoId}`}
+              onPointerDown={() => startLongPress(track)}
+              onPointerUp={clearLongPress}
+              onPointerLeave={clearLongPress}
+              onPointerCancel={clearLongPress}
+              onTouchEnd={(e) => {
+                clearLongPress();
+                if (didLongPressRef.current) {
+                  e.preventDefault();
+                  didLongPressRef.current = false;
+                }
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                clearLongPress();
+                didLongPressRef.current = true;
+                setActionTrack(track);
+              }}
               style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px' }}
             >
               {/* Artwork */}
@@ -295,7 +413,11 @@ export const SearchView: React.FC<SearchViewProps> = ({
               )}
 
               {/* Title & Metadata */}
-              <div className="track-details" style={{ flex: 1, minWidth: 0 }}>
+              <div
+                className="track-details"
+                style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+                onClick={() => setActionTrack(track)}
+              >
                 <div className="track-details-title" title={track.title}>
                   {track.title}
                 </div>
@@ -307,7 +429,10 @@ export const SearchView: React.FC<SearchViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <button
                   type="button"
                   className="btn-secondary"
@@ -315,14 +440,58 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   aria-label={`Play ${track.title} on PC`}
                   title="Play on PC"
                   style={{
-                    height: 34,
-                    padding: '0 10px',
-                    fontSize: '0.8rem',
+                    height: 32,
+                    padding: '0 9px',
+                    fontSize: '0.78rem',
                     backgroundColor: 'var(--bg-surface)',
                   }}
                 >
                   ▶ Play
                 </button>
+
+                {onPlayNext && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      onPlayNext(track);
+                      showToast(`Playing "${track.title}" next`);
+                    }}
+                    aria-label={`Play ${track.title} next`}
+                    title="Play Next"
+                    data-testid={`search-play-next-${track.videoId}`}
+                    style={{
+                      height: 32,
+                      padding: '0 8px',
+                      fontSize: '0.75rem',
+                      backgroundColor: 'var(--bg-surface)',
+                    }}
+                  >
+                    ⏭ Next
+                  </button>
+                )}
+
+                {onPlayLast && (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      onPlayLast(track);
+                      showToast(`Added "${track.title}" to end of queue`);
+                    }}
+                    aria-label={`Play ${track.title} last`}
+                    title="Play Last"
+                    data-testid={`search-play-last-${track.videoId}`}
+                    style={{
+                      height: 32,
+                      padding: '0 8px',
+                      fontSize: '0.75rem',
+                      backgroundColor: 'var(--bg-surface)',
+                    }}
+                  >
+                    ⤵ Last
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -331,7 +500,7 @@ export const SearchView: React.FC<SearchViewProps> = ({
                   aria-label={`Add ${track.title} to playlist`}
                   title="Add to Playlist"
                   style={{
-                    height: 34,
+                    height: 32,
                     padding: '0 8px',
                     fontSize: '0.85rem',
                     backgroundColor: 'var(--bg-surface)',
@@ -339,11 +508,52 @@ export const SearchView: React.FC<SearchViewProps> = ({
                 >
                   +
                 </button>
+
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setActionTrack(track)}
+                  aria-label={`More actions for ${track.title}`}
+                  title="Track options (Play Next, Play Last, Add to Playlist)"
+                  data-testid={`search-more-${track.videoId}`}
+                  style={{
+                    height: 32,
+                    padding: '0 7px',
+                    fontSize: '0.85rem',
+                    backgroundColor: 'var(--bg-surface)',
+                  }}
+                >
+                  •••
+                </button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Track Action Sheet (Click / Long-Press Menu) */}
+      <TrackActionSheet
+        track={actionTrack}
+        onClose={() => setActionTrack(null)}
+        onPlayNow={(t) => onPlayTrack(t)}
+        onPlayNext={
+          onPlayNext
+            ? (t) => {
+                onPlayNext(t);
+                showToast(`Playing "${t.title}" next`);
+              }
+            : undefined
+        }
+        onPlayLast={
+          onPlayLast
+            ? (t) => {
+                onPlayLast(t);
+                showToast(`Added "${t.title}" to end of queue`);
+              }
+            : undefined
+        }
+        onAddToPlaylist={(t) => onAddToPlaylist(t)}
+      />
 
       {/* Empty State: No results found */}
       {!isLoading && !error && debouncedQuery && results.length === 0 && !directInput && (

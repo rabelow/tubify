@@ -36,6 +36,10 @@ export interface NowPlayingViewProps {
   onToggleMute: () => void | Promise<void>;
 
   onAddToPlaylist?: () => void;
+  isShuffleActive?: boolean;
+  repeatModeValue?: 0 | 1 | 2;
+  onPlayNextCurrent?: () => void;
+  onPlayLastCurrent?: () => void;
 }
 
 export function formatTime(seconds: number): string {
@@ -68,13 +72,18 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
   onToggleMute,
 
   onAddToPlaylist,
+  isShuffleActive = false,
+  repeatModeValue,
+  onPlayNextCurrent,
+  onPlayLastCurrent,
 }) => {
   const [imgError, setImgError] = useState<boolean>(false);
   const [scrubbingProgress, setScrubbingProgress] = useState<number | null>(null);
 
-  // Clear scrubbing state on track transition
+  // Clear scrubbing and image error state on track transition
   useEffect(() => {
     setScrubbingProgress(null);
+    setImgError(false);
   }, [video?.id]);
 
   const isPlaying = trackState === 1 && !player?.isPaused;
@@ -89,8 +98,14 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
   const isLiked = video?.likeStatus === 2 || video?.likeStatus === 'LIKE';
   const isDisliked = video?.likeStatus === 0 || video?.likeStatus === 'DISLIKE';
 
-  // Repeat mode resolution
-  const repeatMode = player?.repeatType ?? (player?.queue?.repeatMode ?? 0);
+  // Repeat mode resolution (handles both player.repeatType and player.queue.repeatMode)
+  const rawPlayerRepeat =
+    player?.repeatType !== undefined && player.repeatType >= 0
+      ? player.repeatType
+      : player?.queue?.repeatMode !== undefined && player.queue.repeatMode >= 0
+        ? player.queue.repeatMode
+        : 0;
+  const repeatMode = repeatModeValue !== undefined ? repeatModeValue : rawPlayerRepeat;
 
   const currentDisplayProgress = scrubbingProgress !== null ? scrubbingProgress : interpolatedProgress;
   const safeDuration = durationSeconds > 0 ? durationSeconds : 1;
@@ -109,8 +124,8 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
   return (
     <div className="tab-view">
       <div className="now-playing-container">
-        {/* Album Artwork */}
-        <div className="artwork-wrapper">
+        {/* Album Artwork with Sunburst Studio Turntable Frame */}
+        <div className={`artwork-wrapper ${isPlaying ? 'playing' : ''}`}>
           {artworkUrl ? (
             <img
               src={artworkUrl}
@@ -123,6 +138,7 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
               style={{
                 width: '100%',
                 height: '100%',
+                position: 'relative',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -131,10 +147,25 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
                 color: 'var(--text-muted)',
               }}
             >
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+              <img
+                src="/assets/vinyl-placeholder.png"
+                alt=""
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: 0.55,
+                }}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style={{ position: 'relative', zIndex: 1 }}>
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
               </svg>
-              <span style={{ fontSize: '0.8rem', marginTop: 8 }}>
+              <span style={{ fontSize: '0.8rem', marginTop: 8, position: 'relative', zIndex: 1, fontWeight: 600 }}>
                 {video ? 'No Artwork' : 'Ready to Play'}
               </span>
             </div>
@@ -184,22 +215,30 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
             className={`btn-transport ${isDisliked ? 'active' : ''}`}
             onClick={onToggleDislike}
             aria-label="Dislike"
+            aria-pressed={isDisliked}
             title="Dislike"
             disabled={!video}
           >
             👎
           </button>
 
-          {/* Shuffle */}
+          {/* Shuffle with Active Illuminated State & Badge */}
           <button
             type="button"
-            className="btn-transport"
+            className={`btn-transport ${isShuffleActive ? 'active' : ''}`}
             onClick={onShuffle}
             aria-label="Shuffle"
-            title="Shuffle"
+            aria-pressed={isShuffleActive}
+            title={isShuffleActive ? 'Shuffle On' : 'Shuffle Off'}
+            data-testid="shuffle-btn"
             disabled={!video}
           >
-            🔀
+            <span>🔀</span>
+            {isShuffleActive && (
+              <span className="transport-badge" data-testid="shuffle-active-badge">
+                ON
+              </span>
+            )}
           </button>
 
           {/* Previous */}
@@ -237,16 +276,23 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
             ⏭
           </button>
 
-          {/* Repeat Mode */}
+          {/* Repeat Mode with Active Illuminated State & Mode Badge */}
           <button
             type="button"
             className={`btn-transport ${repeatMode > 0 ? 'active' : ''}`}
             onClick={onRepeatMode}
             aria-label="Repeat Mode"
+            aria-pressed={repeatMode > 0}
             title={repeatMode === 2 ? 'Repeat One' : repeatMode === 1 ? 'Repeat All' : 'Repeat Off'}
+            data-testid="repeat-btn"
             disabled={!video}
           >
-            {repeatMode === 2 ? '🔂' : '🔁'}
+            <span>{repeatMode === 2 ? '🔂' : '🔁'}</span>
+            {repeatMode > 0 && (
+              <span className="transport-badge" data-testid="repeat-active-badge">
+                {repeatMode === 2 ? '1' : 'ALL'}
+              </span>
+            )}
           </button>
 
           {/* Thumbs Up */}
@@ -255,6 +301,7 @@ export const NowPlayingView: React.FC<NowPlayingViewProps> = ({
             className={`btn-transport ${isLiked ? 'active' : ''}`}
             onClick={onToggleLike}
             aria-label="Like"
+            aria-pressed={isLiked}
             title="Like"
             disabled={!video}
           >

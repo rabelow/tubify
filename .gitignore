@@ -9,8 +9,9 @@ dist-ssr/
 # Agent metadata and preview workspaces
 .agents/
 
-# Local custom playlist data (user-specific runtime state)
+# Local custom playlist & companion session data (user-specific runtime state)
 data/playlists.json
+data/companion-session.json
 
 # Environment and local overrides
 *.local
@@ -22,6 +23,7 @@ data/playlists.json
 coverage/
 
 # Capacitor / Android build artifacts
+*.apk
 android/.gradle/
 android/build/
 android/app/build/

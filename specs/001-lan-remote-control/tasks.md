@@ -127,6 +127,17 @@
 
 ---
 
+## Phase 8: Live User Feedback Upgrades (Smart Queue, Active States, Playlists & APK)
+
+- [x] T029 [US2] Implement Unified Smart Queue (`playNext`, `playLast`, `reorderQueue`, `removeFromQueue`, `clearQueueOverride`) in `src/hooks/useCompanion.ts` and `src/components/TrackActionSheet.tsx`
+- [x] T030 [US2] Add auto-scroll to currently playing song (`scrollIntoView`), "Jump to Playing" button, reorder controls (`↑`/`↓`/drag), and long-press/`•••` action sheet in `src/components/QueueView.tsx`, `src/components/SearchView.tsx`, and `src/components/PlaylistsView.tsx`
+- [x] T031 [US3] Add `localStorage` rate-limit caching for native desktop playlists (`429` protection), rate-limit-free YouTube Music playlist search (`GET /api/playlists/search`), and 1-tap "Save Current Queue as Playlist" in `src/server/ytmusic-search.ts`, `src/server/local-api.ts`, and `src/components/PlaylistsView.tsx`
+- [x] T032 [US1] Fix Repeat mode state resolution (`player.queue.repeatMode`) & cycling (`0 -> 1 -> 2 -> 0`) and add illuminated `.active` visual badges (`ON`, `ALL`, `1`) for Shuffle and Repeat in `src/hooks/useCompanion.ts` and `src/components/NowPlayingView.tsx`
+- [x] T033 [P] Generate custom visual assets via Azure Foundry `gpt-image-2.5-sunburst` (`public/assets/tubify-logo.png`, `public/assets/vinyl-placeholder.png`, `public/assets/empty-crate.png`) and apply the "Sunburst Analog Studio & Warm Obsidian Glass" aesthetic + floating Mini-Player bar in `src/styles.css` and `src/App.tsx`
+- [x] T034 Compile and verify installable Android APK (`tubify-debug.apk`) via Gradle (`.\gradlew.bat assembleDebug`) and add Iteration 2 test suite in `tests/ux-queue-shuffle-repeat-upgrade.test.tsx`
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

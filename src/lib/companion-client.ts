@@ -510,6 +510,22 @@ export class CompanionClient {
     return res.json();
   }
 
+  /** Queries YouTube Music WEB_REMIX playlists via the Vite local host middleware (zero YTMDesktop rate limit) */
+  async searchPlaylists(
+    query: string,
+    host?: string,
+    apiPort?: number
+  ): Promise<{ results: PlaylistSummary[] }> {
+    const url = `${this.getLocalApiBaseUrl(host, apiPort)}/api/playlists/search?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      let err: any = null;
+      try { err = await res.json(); } catch {}
+      throw new Error(err?.message ?? `Failed to search playlists: HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
   /** Lists all host-persisted editable playlists */
   async getEditablePlaylists(host?: string, apiPort?: number): Promise<EditablePlaylist[]> {
     const url = `${this.getLocalApiBaseUrl(host, apiPort)}/api/playlists`;
@@ -539,6 +555,27 @@ export class CompanionClient {
       let err: any = null;
       try { err = await res.json(); } catch {}
       throw new Error(err?.message ?? `Failed to create playlist: HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  /** Creates a new editable playlist pre-populated with tracks (e.g. Save Current Queue) */
+  async createEditablePlaylistWithTracks(
+    title: string,
+    tracks: SearchTrack[],
+    host?: string,
+    apiPort?: number
+  ): Promise<EditablePlaylist> {
+    const url = `${this.getLocalApiBaseUrl(host, apiPort)}/api/playlists`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, tracks }),
+    });
+    if (!res.ok) {
+      let err: any = null;
+      try { err = await res.json(); } catch {}
+      throw new Error(err?.message ?? `Failed to create playlist with tracks: HTTP ${res.status}`);
     }
     return res.json();
   }
@@ -620,5 +657,52 @@ export class CompanionClient {
       throw new Error(err?.message ?? `Failed to remove track: HTTP ${res.status}`);
     }
     return res.json();
+  }
+
+  /** Fetches the shared companion authorization session from the local Tubify server */
+  async getSharedSession(
+    host?: string,
+    apiPort?: number
+  ): Promise<{ host: string | null; port: number; token: string | null; updatedAt?: number } | null> {
+    try {
+      const url = `${this.getLocalApiBaseUrl(host, apiPort)}/api/companion/session`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data && typeof data.token === 'string' && data.token.trim()) {
+        return {
+          host: typeof data.host === 'string' ? data.host : null,
+          port: typeof data.port === 'number' ? data.port : 9863,
+          token: data.token.trim(),
+          updatedAt: data.updatedAt,
+        };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Persists the active companion authorization session to the local Tubify server for cross-device sharing */
+  async saveSharedSession(
+    session: { host: string; port: number; token: string },
+    apiPort?: number
+  ): Promise<void> {
+    try {
+      const url = `${this.getLocalApiBaseUrl(session.host, apiPort)}/api/companion/session`;
+      await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(session),
+      });
+    } catch {}
+  }
+
+  /** Clears the shared companion authorization session on the local Tubify server */
+  async clearSharedSession(host?: string, apiPort?: number): Promise<void> {
+    try {
+      const url = `${this.getLocalApiBaseUrl(host, apiPort)}/api/companion/session`;
+      await fetch(url, { method: 'DELETE' });
+    } catch {}
   }
 }

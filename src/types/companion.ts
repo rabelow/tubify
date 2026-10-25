@@ -116,6 +116,12 @@ export interface VideoMetadata {
 export interface QueueItem {
   /** 0-based sequential display index assigned by Tubify */
   index?: number;
+  /** Unique client-side identifier for unified queue tracking & reordering */
+  queueId?: string;
+  /** Origin of this queue entry ('desktop' | 'play-next' | 'play-last' | 'custom') */
+  source?: 'desktop' | 'play-next' | 'play-last' | 'custom';
+  /** Original index in YTMDesktop's native queue if applicable */
+  nativeIndex?: number;
   /** Track title */
   title: string;
   /** Artist / author name */
@@ -235,6 +241,10 @@ export interface PlaylistSummary {
   id: string;
   /** Native playlist title */
   title: string;
+  /** Optional subtitle (e.g. author or track count from YouTube Music search) */
+  subtitle?: string;
+  /** Optional cover thumbnail URL */
+  thumbnailUrl?: string;
 }
 
 // ============================================================================

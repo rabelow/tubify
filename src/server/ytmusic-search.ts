@@ -6,10 +6,11 @@
  * Normalizes deep renderer responses into clean SearchTrack[] records.
  */
 
-import type { SearchTrack } from '../types/companion';
+import type { PlaylistSummary, SearchTrack } from '../types/companion';
 
 const INNERTUBE_SEARCH_URL = 'https://music.youtube.com/youtubei/v1/search?prettyPrint=false';
 const SONGS_FILTER_PARAMS = 'EgWKAQIIAWoKEAkQBRAKEAMQBA%3D%3D';
+const PLAYLISTS_FILTER_PARAMS = 'EgWKAQIoAWoKEAkQBRAKEAMQBA%3D%3D';
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
@@ -203,3 +204,124 @@ export async function searchYouTubeMusic(query: string): Promise<SearchTrack[]> 
   const data = await response.json();
   return parseInnertubeResponse(data);
 }
+
+/**
+ * Extracts a PlaylistSummary from a musicResponsiveListItemRenderer node.
+ */
+export function parsePlaylistSearchItem(renderer: any): PlaylistSummary | null {
+  try {
+    if (!renderer) return null;
+
+    const watchPlaylistId =
+      renderer?.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer
+        ?.playNavigationEndpoint?.watchPlaylistEndpoint?.playlistId;
+    const browseId = renderer?.navigationEndpoint?.browseEndpoint?.browseId;
+    const rawId = watchPlaylistId || (typeof browseId === 'string' ? browseId.replace(/^VL/, '') : null);
+
+    if (!rawId || typeof rawId !== 'string') {
+      return null;
+    }
+
+    const flexColumns = renderer?.flexColumns;
+    const titleRuns =
+      flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? [];
+    const title = titleRuns.map((r: any) => r?.text ?? '').join('').trim();
+    if (!title) return null;
+
+    const subtitleRuns =
+      flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? [];
+    const subtitle = subtitleRuns.map((r: any) => r?.text ?? '').join('').trim() || undefined;
+
+    const thumbnails =
+      renderer?.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails ?? [];
+    let thumbnailUrl: string | undefined;
+    if (Array.isArray(thumbnails) && thumbnails.length > 0) {
+      const lastThumb = thumbnails[thumbnails.length - 1];
+      if (lastThumb?.url && typeof lastThumb.url === 'string') {
+        thumbnailUrl = lastThumb.url;
+      }
+    }
+
+    return {
+      id: rawId,
+      title,
+      ...(subtitle ? { subtitle } : {}),
+      ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function parseInnertubePlaylistsResponse(data: any): PlaylistSummary[] {
+  try {
+    const tabs = data?.contents?.tabbedSearchResultsRenderer?.tabs ?? [];
+    let sectionContents: any[] = [];
+    for (const tab of tabs) {
+      const contents = tab?.tabRenderer?.content?.sectionListRenderer?.contents;
+      if (Array.isArray(contents) && contents.length > 0) {
+        sectionContents = contents;
+        break;
+      }
+    }
+
+    const items: any[] = [];
+    for (const section of sectionContents) {
+      const shelfItems = section?.musicShelfRenderer?.contents;
+      if (Array.isArray(shelfItems)) {
+        items.push(...shelfItems);
+      }
+    }
+
+    const playlists: PlaylistSummary[] = [];
+    for (const item of items) {
+      const renderer = item?.musicResponsiveListItemRenderer;
+      if (renderer) {
+        const pl = parsePlaylistSearchItem(renderer);
+        if (pl) playlists.push(pl);
+      }
+    }
+    return playlists;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Searches YouTube Music for community/featured playlists matching the query.
+ * Has zero YTMDesktop rate limits since it queries WEB_REMIX directly.
+ */
+export async function searchYouTubePlaylists(query: string): Promise<PlaylistSummary[]> {
+  const cleanQuery = typeof query === 'string' ? query.trim() : '';
+  if (!cleanQuery) {
+    return [];
+  }
+
+  const payload = {
+    context: {
+      client: {
+        clientName: 'WEB_REMIX',
+        clientVersion: '1.20241021.01.00',
+      },
+    },
+    query: cleanQuery,
+    params: PLAYLISTS_FILTER_PARAMS,
+  };
+
+  const response = await fetch(INNERTUBE_SEARCH_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': USER_AGENT,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`YouTube Music playlist search failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  return parseInnertubePlaylistsResponse(data);
+}
+
